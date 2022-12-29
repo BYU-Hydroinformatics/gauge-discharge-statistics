@@ -45,6 +45,38 @@ def function_to_calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
     # calculate std
     calculated_stats['stdev'] = df.std()
 
+    # calculate total measurements
+    calculated_stats['n'] = df.count()
+
+    # calculate number of measurements per month
+    calculated_stats['n_jan'] = df[df.index.month == 1].count()
+    calculated_stats['n_feb'] = df[df.index.month == 2].count()
+    calculated_stats['n_mar'] = df[df.index.month == 3].count()
+    calculated_stats['n_apr'] = df[df.index.month == 4].count()
+    calculated_stats['n_may'] = df[df.index.month == 5].count()
+    calculated_stats['n_jun'] = df[df.index.month == 6].count()
+    calculated_stats['n_jul'] = df[df.index.month == 7].count()
+    calculated_stats['n_aug'] = df[df.index.month == 8].count()
+    calculated_stats['n_sep'] = df[df.index.month == 9].count()
+    calculated_stats['n_oct'] = df[df.index.month == 10].count()
+    calculated_stats['n_nov'] = df[df.index.month == 11].count()
+    calculated_stats['n_dec'] = df[df.index.month == 12].count()
+
+    # calculate number of gaps longer than one month
+    calculated_stats['n_gaps'] = df.resample('M').count().isnull().sum()
+
+    # see if most recent measurement is over a year ago
+    calculated_stats['last_obs'] = df.index.max()
+
+    # year of first measurement
+    calculated_stats['first_year'] = df.index.year.min()
+
+    # year of last measurement
+    calculated_stats['last_year'] = df.index.year.max()
+
+    # calculate average number of measurements per year
+    calculated_stats['yearly_avg'] = calculated_stats['n'] / df.index.year.nunique()
+
     # make return dataframe
     df_to_return = pd.DataFrame(calculated_stats)
     # set the index value to be the gauge_id which is the name of the csv file
