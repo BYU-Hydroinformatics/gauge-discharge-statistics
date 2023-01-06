@@ -14,7 +14,17 @@ def function_to_calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
         a dataframe with stats for each column in the csv file
     """
     df = pd.read_csv(str_path_csv_file, index_col=0)
+
+    # drop possible empty third column
+    df = df.dropna(how='all', axis=1)
+
+    # drop rows with empty values
+    df = df.dropna()
+
     df.index = pd.to_datetime(df.index)
+    # don't return anything if there are no measurements
+    if df.empty:
+        return  # return None
 
     # dictionary to keep track of stats
     calculated_stats = {}
@@ -31,10 +41,10 @@ def function_to_calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
     calculated_stats['min'] = df.min()
 
     # calculate 25th percentile
-    calculated_stats['q1'] = df.quantile(0.25)
+    calculated_stats['q1'] = df.quantile(0.25, numeric_only=True)
 
     # calculate 75th percentile
-    calculated_stats['q3'] = df.quantile(0.75)
+    calculated_stats['q3'] = df.quantile(0.75, numeric_only=True)
 
     # calculate max
     calculated_stats['max'] = df.max()
@@ -81,5 +91,5 @@ def function_to_calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
     df_to_return = pd.DataFrame(calculated_stats)
     # set the index value to be the gauge_id which is the name of the csv file
     df_to_return.index = [os.path.basename(str_path_csv_file).replace('.csv', ''), ]
-
+    df_to_return.index.name = 'gauge_id'
     return df_to_return
