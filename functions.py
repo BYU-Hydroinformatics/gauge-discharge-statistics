@@ -107,7 +107,7 @@ def create_plots(df: pd.DataFrame) -> None:
     if n_col - np.square(plot_rows - 1) <= plot_rows - 1:
         plot_cols -= 1
 
-    fig, axes = plt.subplots(plot_rows, plot_cols, figsize=(15, 15))
+    fig, axes = plt.subplots(plot_rows, plot_cols, figsize=(plot_rows * 3 + 1, plot_cols * 3 + 1))
     axes = axes.flatten()
     for i, col in enumerate(df.columns):
         column_name = col[0]
@@ -117,9 +117,11 @@ def create_plots(df: pd.DataFrame) -> None:
         ax.set_title(col)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)  # Adjust spacing between subplots
     plt.tight_layout()
+    plt.savefig(f'histogram.png', format='png')
     plt.show()
 
-    fig, axes = plt.subplots(plot_rows, plot_cols, figsize=(15, 15))
+    fig, axes = plt.subplots(plot_rows, plot_cols, figsize=(plot_rows * 3 + 1, plot_cols * 3 + 1))
+    axes = axes.flatten()
     for i, col in enumerate(df.columns):
         column_name = col[0]
         column_units = col[1]
@@ -128,16 +130,25 @@ def create_plots(df: pd.DataFrame) -> None:
         ax.set_title(col)
     plt.subplots_adjust(wspace=0.4, hspace=0.4)  # Adjust spacing between subplots
     plt.tight_layout()
+    plt.savefig(f'boxplot.png', format='png')
     plt.show()
+
     for column in df.columns:
         column_name = column[0]
         column_units = column[1]
-        fig, ax,
-        create_histogram(df[column[0]], column_name, column_units)
-        create_boxplot(df[column[0]], column_name, column_units)
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        create_histogram(ax, df[column[0]], column_name, column_units)
+        plt.savefig(f'histograms_with_outliers/{column_name}_histogram.png', format='png')
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        create_boxplot(ax, df[column[0]], column_name, column_units)
+        plt.savefig(f'boxplots_with_outliers/{column_name}_boxplot.png', format='png')
         include_outliers = False
-        create_histogram(df[column[0]], column_name, column_units, include_outliers)
-        create_boxplot(df[column[0]], column_name, column_units, include_outliers)
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        create_histogram(ax, df[column[0]], column_name, column_units, include_outliers)
+        plt.savefig(f'histograms_without_outliers/{column_name}_histogram.png', format='png')
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
+        create_boxplot(ax, df[column[0]], column_name, column_units, include_outliers)
+        plt.savefig(f'boxplots_without_outliers/{column_name}_boxplot.png', format='png')
 
 
 def create_histogram(ax, df_column, column_name, column_units, include_outliers=True):
