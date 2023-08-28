@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -45,14 +46,13 @@ def calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
         else:
             calculated_stats[stat] = getattr(df, stat)()
 
-    print(calculated_stats)
+    # calculate total measurements
+    calculated_stats['n'] = df.count()
 
     # calculate number of measurements per month
     for month in range(1, 13):
-        month_name = df.index.strftime('%b').unique()[month - 1]  # should it be 0?
+        month_name = pd.to_datetime(str(month), format='%m').strftime('%B')  # should it be 0?
         calculated_stats[f'n_{month_name.lower()}'] = (df.index.month == month).sum()
-
-    print(calculated_stats)
 
     # calculate number of gaps longer than one month using the difference between the index values
     calculated_stats['n_gaps'] = df.index.to_series().diff().dt.days.gt(31).sum()
@@ -67,7 +67,7 @@ def calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
     calculated_stats['last_year'] = df.index.year.max()
 
     # calculate average number of measurements per year
-    calculated_stats['yearly_avg'] = calculated_stats / df.index.year.nunique()
+    calculated_stats['yearly_avg'] = calculated_stats['n'] / df.index.year.nunique()
 
     # make return dataframe
     df_to_return = pd.DataFrame(calculated_stats)
@@ -77,7 +77,7 @@ def calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
     return df_to_return
 
 
-def function_to_create_graphs(str_path_csv_file: str) -> None:
+def create_plots(df: pd.DataFrame) -> None:
     """
     create graphs by column for a single csv file
     parameters:
@@ -87,7 +87,6 @@ def function_to_create_graphs(str_path_csv_file: str) -> None:
     returns:
     None
     """
-    df = pd.read_csv(str_path_csv_file, index_col=0)
     # convert last observed column to datetime then int
     df['last_obs'] = pd.to_datetime(df['last_obs'], errors='coerce')
     df['last_obs'] = df['last_obs'].dt.year
@@ -102,10 +101,38 @@ def function_to_create_graphs(str_path_csv_file: str) -> None:
              ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
     tuples = list(zip(df.columns, units))
     df.columns = pd.MultiIndex.from_tuples(tuples, names=['name', 'units'])
+    n_col = df.shape[1]
+    plot_rows = int(np.sqrt(n_col)) + 1
+    plot_cols = plot_rows
+    if n_col - np.square(plot_rows - 1) <= plot_rows - 1:
+        plot_cols -= 1
 
+    fig, axes = plt.subplots(plot_rows, plot_cols, figsize=(15, 15))
+    axes = axes.flatten()
+    for i, col in enumerate(df.columns):
+        column_name = col[0]
+        column_units = col[1]
+        ax = axes[i]  # Get the appropriate subplot
+        create_histogram(ax, df[col[0]], column_name, column_units)  # Create the histogram
+        ax.set_title(col)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)  # Adjust spacing between subplots
+    plt.tight_layout()
+    plt.show()
+
+    fig, axes = plt.subplots(plot_rows, plot_cols, figsize=(15, 15))
+    for i, col in enumerate(df.columns):
+        column_name = col[0]
+        column_units = col[1]
+        ax = axes[i]  # Get the appropriate subplot
+        create_boxplot(ax, df[col[0]], column_name, column_units)  # Create the histogram
+        ax.set_title(col)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)  # Adjust spacing between subplots
+    plt.tight_layout()
+    plt.show()
     for column in df.columns:
         column_name = column[0]
         column_units = column[1]
+        fig, ax,
         create_histogram(df[column[0]], column_name, column_units)
         create_boxplot(df[column[0]], column_name, column_units)
         include_outliers = False
@@ -113,7 +140,7 @@ def function_to_create_graphs(str_path_csv_file: str) -> None:
         create_boxplot(df[column[0]], column_name, column_units, include_outliers)
 
 
-def create_histogram(df_column, column_name, column_units, include_outliers=True):
+def create_histogram(ax, df_column, column_name, column_units, include_outliers=True):
     """
     create histogram for columns, choosing to include outliers or not
     parameters:
@@ -141,16 +168,15 @@ def create_histogram(df_column, column_name, column_units, include_outliers=True
     # Generate the file path for saving the histogram
     file_path = os.path.join(folder_name, f'{column_name}_histogram.png')
     # Create and save the histogram
-    histogram = df_column.plot.hist(bins=10)
-    plt.title(f'{column_name}{" without outliers" if not include_outliers else ""}')
-    plt.xlabel(f'{column_name} ({column_units})' if column_units != " " else column_name)
-    plt.ylabel('Frequency')
-    plt.bar_label(histogram.containers[0])
+    histogram = df_column.plot.hist(ax=ax, bins=10)
+    ax.set_title(f'{column_name}{" without outliers" if not include_outliers else ""}')
+    ax.set_xlabel(f'{column_name} ({column_units})' if column_units != " " else column_name)
+    ax.set_ylabel('Frequency')
+    ax.bar_label(histogram.containers[0])
     histogram.legend().remove()
-    plt.savefig(file_path)
 
 
-def create_boxplot(df_column, column_name, column_units, include_outliers=True):
+def create_boxplot(ax, df_column, column_name, column_units, include_outliers=True):
     """
     create boxplot for columns, choosing to include outliers or not
     parameters:
@@ -173,8 +199,7 @@ def create_boxplot(df_column, column_name, column_units, include_outliers=True):
     # Generate the file path for saving the boxplot
     file_path = os.path.join(folder_name, f'{column_name}_boxplot.png')
     # create and save the boxplot
-    df_column.plot.box(showfliers=include_outliers)
-    plt.title(f'{column_name}{" without outliers" if not include_outliers else ""}')
-    plt.ylabel(f'{column_name} {column_units}')
-    plt.xticks([])
-    plt.savefig(file_path)
+    df_column.plot.box(ax=ax, showfliers=include_outliers)
+    ax.set_title(f'{column_name}{" without outliers" if not include_outliers else ""}')
+    ax.set_ylabel(f'{column_name} {column_units}')
+    ax.set_xticks([])

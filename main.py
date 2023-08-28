@@ -6,8 +6,6 @@ import os
 
 directory = 'observed_discharge'
 df = pd.DataFrame()
-print(glob('/Users/joshogden/Downloads/ObservedDischarge-selected/*/Observed_Data/*.csv') + \
-      glob('/Users/joshogden/Downloads/ObservedDischarge-selected/*/*/Observed_Data/*.csv'))
 for filename in glob('/Users/Downloads/ObservedDischarge-selected/*/Observed_Data/*.csv') + \
                 glob('/Users/joshogden/Downloads/ObservedDischarge-selected/*/*/Observed_Data/*.csv'):
     if os.path.getsize(filename) > 0:
@@ -17,10 +15,10 @@ for filename in glob('/Users/Downloads/ObservedDischarge-selected/*/Observed_Dat
 df = df.sort_values(by=['gauge_id'])
 
 # save to csv
-df.to_csv('stats_updated.csv')
+df.to_csv('stats_updated.csv', index=False)
 
 # create graphs
-function.function_to_create_graphs('/Users/student/PycharmProjects/gauge-discharge-statistics/stats_updated.csv')
+function.create_plots(df)
 print("completed")
 '''
 ## edit peru_116.csv dates to be 19xx instead of 20xx for the ones that are wrong
