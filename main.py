@@ -1,15 +1,17 @@
 # This is a sample Python script.
 import functions as function
 import pandas as pd
-import glob
+from glob import glob
 import os
 
 directory = 'observed_discharge'
 df = pd.DataFrame()
-for filename in glob.glob('/Users/student/PycharmProjects/gauge-discharge-test-code/observed_discharge/*.csv'):
+print(glob('/Users/joshogden/Downloads/ObservedDischarge-selected/*/Observed_Data/*.csv') + \
+      glob('/Users/joshogden/Downloads/ObservedDischarge-selected/*/*/Observed_Data/*.csv'))
+for filename in glob('/Users/Downloads/ObservedDischarge-selected/*/Observed_Data/*.csv') + \
+                glob('/Users/joshogden/Downloads/ObservedDischarge-selected/*/*/Observed_Data/*.csv'):
     if os.path.getsize(filename) > 0:
-        csv = os.path.join(directory, filename)
-        df = pd.concat([df, function.function_to_calculate_stats(csv)])
+        df = pd.concat([df, function.calculate_stats(filename)])
 
 # sort alphabetically by first column
 df = df.sort_values(by=['gauge_id'])
