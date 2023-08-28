@@ -49,7 +49,7 @@ def calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
 
     # calculate number of measurements per month
     for month in range(1, 13):
-        month_name = df.index.strftime('%b')[0] # should it be 0?
+        month_name = df.index.strftime('%b').unique()[month - 1]  # should it be 0?
         calculated_stats[f'n_{month_name.lower()}'] = (df.index.month == month).sum()
 
     print(calculated_stats)
@@ -67,7 +67,7 @@ def calculate_stats(str_path_csv_file: str) -> pd.DataFrame:
     calculated_stats['last_year'] = df.index.year.max()
 
     # calculate average number of measurements per year
-    calculated_stats['yearly_avg'] = calculated_stats['n'] / df.index.year.nunique()
+    calculated_stats['yearly_avg'] = calculated_stats / df.index.year.nunique()
 
     # make return dataframe
     df_to_return = pd.DataFrame(calculated_stats)
